@@ -8,6 +8,8 @@ import imagehash
 import numpy as np
 from PIL import Image
 
+from tqdm import tqdm
+
 
 def calculate_signature(image_file: str, hash_size: int) -> np.ndarray:
     """ 
@@ -56,6 +58,7 @@ def find_near_duplicates(input_dir: str, threshold: float, hash_size: int, bands
         raise e
     
     # Iterate through all files in input directory
+    print("Loading all image files...")
     for fh in file_list:
         try:
             signature = calculate_signature(fh, hash_size)
@@ -75,6 +78,7 @@ def find_near_duplicates(input_dir: str, threshold: float, hash_size: int, bands
             hash_buckets_list[i][signature_band_bytes].append(fh)
 
     # Build candidate pairs based on bucket membership
+    print("Making candidate pairs...")
     candidate_pairs = set()
     for hash_buckets in hash_buckets_list:
         for hash_bucket in hash_buckets.values():
@@ -87,8 +91,9 @@ def find_near_duplicates(input_dir: str, threshold: float, hash_size: int, bands
                         )
 
     # Check candidate pairs for similarity
+    print("comparing image combinations...")
     near_duplicates = list()
-    for cpa, cpb in candidate_pairs:
+    for cpa, cpb in tqdm(candidate_pairs):
         hd = sum(np.bitwise_xor(
                 np.unpackbits(signatures[cpa]), 
                 np.unpackbits(signatures[cpb])
